@@ -59,4 +59,9 @@ mac_view_t *mac_table_snapshot(mac_table_t *t, size_t *n);
 
 void mac_format(const uint8_t mac[6], char out[18]);
 
+
+int mac_table_start_aging(mac_table_t *t, time_t max_age);
+
+void mac_table_stop_aging();
+
 #endif
