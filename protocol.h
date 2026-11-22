@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #define MAX_PAYLOAD 1500
-#define HEADER_LEN 17
+#define HDR_LEN 17
 #define HP 0
 #define NP 1
 #define LP 2
