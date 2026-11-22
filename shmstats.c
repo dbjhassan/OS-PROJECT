@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include "shm_stats.h"
+#include "shmstats.h"
 #include "common.h"
 
 int shm_stats_create(shm_stats_t **stats, int num_ports)
