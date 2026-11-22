@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include "proto.h"
+#include "protocol.h"
 
 
 int read_full(int fd, void *buf, size_t n)
