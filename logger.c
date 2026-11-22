@@ -63,9 +63,11 @@ void *logger_thread(void *arg)
             pthread_cond_wait(&log_cond, &log_lock);
 
         if (count==0 && lost==0)
+        {
             pthread_mutex_unlock(&log_lock);
             break;
-
+        }
+        
         lost_now=lost;
         lost=0;
 
