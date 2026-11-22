@@ -1,10 +1,18 @@
 #include "mactable.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+
+
+static pthread_t aging_tid;
+static pthread_mutex_t aging_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t aging_cond = PTHREAD_COND_INITIALIZER;
+static int stopaging = 0;
+static mac_table_t *atable;
+static time_t maxage;
 static unsigned hash_mac(const uint8_t m[6])
+
 {
     uint32_t h = 2166136261u;
 
@@ -264,4 +272,64 @@ mac_view_t *mac_table_snapshot(mac_table_t *t, size_t *n)
 void mac_format(const uint8_t m[6], char out[18])
 {
     snprintf(out, 18, "%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
+}
+
+static void *aging_thread(void *arg)
+{
+    (void)arg;
+
+    pthread_mutex_lock(&aging_lock);
+
+    while (!stopaging)
+    {
+        struct timespec ts;
+        size_t aged;
+
+        if (clock_gettime(CLOCK_REALTIME, &ts)==-1)
+        {
+            perror("clock_gettime");
+            break;
+        }
+
+        ts.tv_sec+= 1;
+        pthread_cond_timedwait(&aging_cond, &aging_lock, &ts);
+
+        if (stopaging)
+            break;
+
+        pthread_mutex_unlock(&aging_lock);
+        aged = mac_table_age(atable, maxage);
+        pthread_mutex_lock(&aging_lock);
+
+        if (aged>0)
+        {
+            printf("[mac] aged out %zu entries\n", aged);
+            fflush(stdout);
+        }
+    }
+
+    pthread_mutex_unlock(&aging_lock);
+    return NULL;
+}
+
+int mactable_startaging(mac_table_t *t, time_t max_age)
+{
+    atable = t;
+    maxage = max_age;
+    stopaging = 0;
+
+    if (pthread_create(&aging_tid, NULL, aging_thread, NULL) != 0)
+        return -1;
+
+    return 0;
+}
+
+void mactable_stopaging()
+{
+    pthread_mutex_lock(&aging_lock);
+    stopaging = 1;
+    pthread_cond_signal(&aging_cond);
+    pthread_mutex_unlock(&aging_lock);
+
+    pthread_join(aging_tid, NULL);
 }
