@@ -17,10 +17,12 @@ int read_full(int fd, void *buf, size_t n)
         ssize_t r=read(fd, (char *)buf+got, n-got);
 
         if (r ==0) 
+        {
             if (got==0)
                 return 0;
             else return -1;
-
+        }
+        
         if (r<0)
         {
             if (errno==EINTR) 
@@ -155,7 +157,7 @@ int parse_port(const char *s)
 
     long v = strtol(s, &end, 10);
 
-    if (errno!= 0 || end==s || *end!='\0' || v<1 or v>65535)
+    if (errno!= 0 || end==s || *end!='\0' || v<1 || v>65535)
         return -1;
 
     return (int)v;
