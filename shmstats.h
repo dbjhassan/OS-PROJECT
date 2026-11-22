@@ -2,7 +2,7 @@
 #define SHM_STATS_H
 
 #include <pthread.h>
-
+#include "common.h"
 #include "protocol.h"
 
 #define STAT_IN 0
