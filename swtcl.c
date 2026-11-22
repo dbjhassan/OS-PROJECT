@@ -6,7 +6,7 @@
 #include <sys/un.h>
 #include <time.h>
 
-#include "shm_stats.h"
+#include "shmstats.h"
 #include "common.h"
 
 #define BUFFER_SIZE 512
