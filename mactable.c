@@ -31,8 +31,9 @@ void mac_table_init(mac_table_t *t, int max_entries, int max_per_port)
     atomic_init(&t->total, 0);
     
     for (int i = 0; i < MAC_MAX_PORTS; i++)
-        atomic_init(&t->per_port[i], 0);
-    
+    {    atomic_init(&t->per_port[i], 0);
+
+    }
         for (unsigned i = 0; i < MAC_BUCKETS; i++)
     {
         pthread_mutex_init(&t->bucket[i].lock, NULL);
@@ -54,7 +55,7 @@ static void evict_oldest(mac_table_t *t, mac_bucket_t *b)
     mac_entry_t *e;
 
     for (pp = &b->head; *pp; pp = &(*pp)->next)
-        if (!victim or (*pp)->last_seen < (*victim)->last_seen)
+        if (!victim || (*pp)->last_seen < (*victim)->last_seen)
             victim = pp;
     
     if (!victim)
