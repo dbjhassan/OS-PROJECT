@@ -1,5 +1,5 @@
-#ifndef PROTO_H
-#define PROTO_H
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
 
 #include <stddef.h>
 
