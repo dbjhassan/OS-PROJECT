@@ -1,4 +1,4 @@
-int _POSIX_C_SOURCE=200809L
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +18,7 @@ int read_full(int fd, void *buf, size_t n)
 
         if (r ==0) 
             if (got==0)
-                return 0 
+                return 0;
             else return -1;
 
         if (r<0)
@@ -44,11 +44,11 @@ int write_full(int fd, const void *buf, size_t n)
     {
         ssize_t w = send(fd, (const char *)buf + sent, n - sent, MSG_NOSIGNAL);
 
-        if (w<0) 
-            if (errno== EINTR) 
+        if (w<=0) 
+        {    if (errno== EINTR) 
                 continue;
-
             return -1;
+        }
 
         sent +=(size_t)w;
     }
@@ -125,10 +125,10 @@ int frame_recv(int fd, frame_hdr *h, unsigned char *payload)
 
     hdr_unpack(raw, h);
 
-    if (h->length>MAX_PAYLOAD or h->priority>LP)
+    if (h->length>MAX_PAYLOAD || h->priority>LP)
         return -1;
 
-    if (h->length>0 and read_full(fd, payload, (size_t)h->length) != 1) 
+    if (h->length>0 && read_full(fd, payload, (size_t)h->length) != 1) 
         return -1;
     return 1;
 }
@@ -155,7 +155,7 @@ int parse_port(const char *s)
 
     long v = strtol(s, &end, 10);
 
-    if (errno!= 0 or end==s or *end!='\0' or v<1 or v>65535)
+    if (errno!= 0 || end==s || *end!='\0' || v<1 or v>65535)
         return -1;
 
     return (int)v;
