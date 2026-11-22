@@ -34,7 +34,6 @@ void *rx_thread(void *arg)
     
     else exit(1);
 }
-}
 
 int main(int argc, char *argv[])
 {
@@ -127,7 +126,7 @@ int main(int argc, char *argv[])
         memset(&h, 0, sizeof(h));
 
         h.vlan = 1;
-        h.priority = PRIO_NORMAL;
+        h.priority = NP;
         memcpy(h.src, my_mac, 6);
 
         if (strcmp(line, "bcast")==0) 
