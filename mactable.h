@@ -9,6 +9,10 @@
 
 #define MAC_BUCKETS 64
 #define MAC_MAX_PORTS 64
+#define MAC_DEFAULT_ENTRIES 1024
+#define MAC_DEFAULT_PER_PORT 16
+#define MAC_DEFAULT_AGE 30
+
 
 enum {
     LEARN_OK = 0,
@@ -62,6 +66,28 @@ void mac_format(const uint8_t mac[6], char out[18]);
 
 int mac_table_start_aging(mac_table_t *t, time_t max_age);
 
-void mac_table_stop_aging();
+void mac_table_stop_aging(void);
+
+void mac_table_remove_port(mac_table_t *t, int port);
+
+int mactable_init(void);
+
+void mactable_destroy(void);
+
+void mactable_set_limits(int entries, int per_port, int age);
+
+int mactable_learn(const unsigned char mac[6], int port);
+
+int mactable_lookup(const unsigned char mac[6]);
+
+void mactable_remove_port(int port);
+
+size_t mactable_clear(void);
+
+mac_view_t *mactable_snapshot(size_t *n);
+
+int mactable_start_aging(void);
+
+void mactable_stop_aging(void);
 
 #endif
