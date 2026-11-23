@@ -10,9 +10,10 @@
 #include <sys/socket.h>
 
 #include "protocol.h"
-#include "mac_table.h"
+#include "mactable.h"
 #include "logger.h"
 #include "common.h"
+#include "switch.h"
 
 static int stop_pipe[2]={-1, -1};
 static pthread_t sig_tid;
