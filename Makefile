@@ -3,18 +3,18 @@ CFLAGS  = -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -g -O0 -pthre
 LDFLAGS = -pthread $(EXTRA)
 LDLIBS  = -lrt
 
-PROGS = switch host swtcl
+PROGS = switch host swctl
 
 all: $(PROGS)
 
-switch: main.o switch.o protocol.o frame.o queue.o mactable.o logger.o
-	$(CC) $(LDFLAGS) -o switch main.o switch.o protocol.o frame.o queue.o mactable.o logger.o $(LDLIBS)
+switch: main.o switch.o protocol.o frame.o queue.o mactable.o logger.o shmstats.o
+	$(CC) $(LDFLAGS) -o switch main.o switch.o protocol.o frame.o queue.o mactable.o logger.o shmstats.o $(LDLIBS)
 
 host: host.o protocol.o
 	$(CC) $(LDFLAGS) -o host host.o protocol.o $(LDLIBS)
 
-swtcl: swtcl.o shmstats.o protocol.o
-	$(CC) $(LDFLAGS) -o swtcl swtcl.o shmstats.o protocol.o $(LDLIBS)
+swctl: swctl.o shmstats.o protocol.o
+	$(CC) $(LDFLAGS) -o swctl swctl.o shmstats.o protocol.o $(LDLIBS)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c -o main.o
@@ -40,8 +40,8 @@ logger.o: logger.c
 host.o: host.c
 	$(CC) $(CFLAGS) -c host.c -o host.o
 
-swtcl.o: swtcl.c
-	$(CC) $(CFLAGS) -c swtcl.c -o swtcl.o
+swctl.o: swctl.c
+	$(CC) $(CFLAGS) -c swctl.c -o swctl.o
 
 shmstats.o: shmstats.c
 	$(CC) $(CFLAGS) -c shmstats.c -o shmstats.o
