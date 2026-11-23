@@ -4,7 +4,7 @@
 
 #include "frame.h"
 
-frame *newframe(const frame_hdr *h, const unsigned char *data)
+frame *frame_new(const frame_hdr *h, const unsigned char *data)
 {
     frame *f = malloc(sizeof(frame));
     
