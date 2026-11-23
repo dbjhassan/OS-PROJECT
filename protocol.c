@@ -102,7 +102,7 @@ int mac_parse(const char *s, unsigned char mac[6])
     return 0;
 }
 
-void mac_formt(const unsigned char m[6], char out[18])
+void mac_fmt(const unsigned char m[6], char out[18])
 {
     snprintf(out, 18, "%02X:%02X:%02X:%02X:%02X:%02X", m[0], m[1], m[2], m[3], m[4], m[5]);
 }
