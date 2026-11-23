@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "logger.h"
+
 
 
 static pthread_t aging_tid;
@@ -285,6 +287,7 @@ static void *aging_thread(void *arg)
     {
         struct timespec ts;
         size_t aged;
+        time_t age;
 
         if (clock_gettime(CLOCK_REALTIME, &ts)==-1)
         {
@@ -298,8 +301,9 @@ static void *aging_thread(void *arg)
         if (stopaging)
             break;
 
+        age = maxage;
         pthread_mutex_unlock(&aging_lock);
-        aged = mac_table_age(atable, maxage);
+        aged = mac_table_age(atable, age);
         pthread_mutex_lock(&aging_lock);
 
         if (aged>0)
@@ -313,7 +317,7 @@ static void *aging_thread(void *arg)
     return NULL;
 }
 
-int mactable_startaging(mac_table_t *t, time_t max_age)
+int mac_table_start_aging(mac_table_t *t, time_t max_age)
 {
     atable = t;
     maxage = max_age;
@@ -325,7 +329,7 @@ int mactable_startaging(mac_table_t *t, time_t max_age)
     return 0;
 }
 
-void mactable_stopaging()
+void mac_table_stop_aging(void)
 {
     pthread_mutex_lock(&aging_lock);
     stopaging = 1;
@@ -333,4 +337,131 @@ void mactable_stopaging()
     pthread_mutex_unlock(&aging_lock);
 
     pthread_join(aging_tid, NULL);
+}
+
+
+/* ======================================================================
+ * NEW PART: one global table, used by switch.c and main.c
+ * Everything above this line is the original code (aging functions renamed
+ * to match mactable.h, and maxage is now copied while aging_lock is held).
+ * ====================================================================== */
+
+static mac_table_t gtable;
+
+void mac_table_remove_port(mac_table_t *t, int port)
+{
+    for (unsigned i = 0; i < MAC_BUCKETS; i++)
+    {
+        mac_bucket_t *b = &t->bucket[i];
+        mac_entry_t **pp;
+
+        pthread_mutex_lock(&b->lock);
+        pp = &b->head;
+
+        while (*pp)
+        {
+            mac_entry_t *e = *pp;
+
+            if (e->port == port)
+            {
+                *pp = e->next;
+                atomic_fetch_sub(&t->per_port[e->port], 1);
+                atomic_fetch_sub(&t->total, 1);
+                free(e);
+            }
+            else
+                pp = &e->next;
+        }
+        pthread_mutex_unlock(&b->lock);
+    }
+}
+
+int mactable_init(void)
+{
+    mac_table_init(&gtable, MAC_DEFAULT_ENTRIES, MAC_DEFAULT_PER_PORT);
+    maxage = MAC_DEFAULT_AGE;
+    return 0;
+}
+
+void mactable_destroy(void)
+{
+    mac_table_destroy(&gtable);
+}
+
+/* 0 = keep the current value */
+void mactable_set_limits(int entries, int per_port, int age)
+{
+    for (unsigned i = 0; i < MAC_BUCKETS; i++)
+        pthread_mutex_lock(&gtable.bucket[i].lock);
+
+    if (entries > 0)
+        gtable.max_entries = entries;
+    if (per_port > 0)
+        gtable.max_per_port = per_port;
+
+    for (unsigned i = MAC_BUCKETS; i-- > 0;)
+        pthread_mutex_unlock(&gtable.bucket[i].lock);
+
+    if (age > 0)
+    {
+        pthread_mutex_lock(&aging_lock);
+        maxage = age;
+        pthread_mutex_unlock(&aging_lock);
+    }
+}
+
+/* returns 0 learned, moved or refreshed, -1 port security violation */
+int mactable_learn(const unsigned char mac[6], int port)
+{
+    int rc = mac_table_learn(&gtable, mac, port);
+
+    if (rc == LEARN_MOVED)
+    {
+        char s[18];
+
+        mac_format(mac, s);
+        log_msg("MAC moved: %s now on port %d", s, port);
+    }
+
+    if (rc == LEARN_PORT_FULL)
+        return -1;
+
+    return 0;
+}
+
+/* returns the port, or -1 if unknown */
+int mactable_lookup(const unsigned char mac[6])
+{
+    return mac_table_lookup(&gtable, mac);
+}
+
+void mactable_remove_port(int port)
+{
+    mac_table_remove_port(&gtable, port);
+}
+
+size_t mactable_clear(void)
+{
+    return mac_table_clear(&gtable);
+}
+
+mac_view_t *mactable_snapshot(size_t *n)
+{
+    return mac_table_snapshot(&gtable, n);
+}
+
+int mactable_start_aging(void)
+{
+    time_t age;
+
+    pthread_mutex_lock(&aging_lock);
+    age = maxage;
+    pthread_mutex_unlock(&aging_lock);
+
+    return mac_table_start_aging(&gtable, age);
+}
+
+void mactable_stop_aging(void)
+{
+    mac_table_stop_aging();
 }
