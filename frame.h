@@ -12,7 +12,7 @@ typedef struct {
     pthread_mutex_t lock;
 } frame;
 
-frame *newframe(const frame_hdr *h, const unsigned char *data);
+frame *frame_new(const frame_hdr *h, const unsigned char *data);
 
 void frame_ref(frame *f);
 
